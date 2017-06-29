@@ -93,7 +93,7 @@ def get_article_ids():
 
 def download_articles():
 
-    offset = 2760
+    offset = 0
 
     with open('elife_article_ids.txt', 'r') as f:
         ids = f.readlines()
