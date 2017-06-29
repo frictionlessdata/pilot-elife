@@ -1,3 +1,18 @@
 Done. 3910 articles, 1085 articles with data.
 Average data files per article: 3.98
 File type counts: {'xlsx': 3855, 'csv': 123, 'xls': 340}
+
+Done. 1085 articles validated, 4318 files.
+Articles with valid files: 241
+Articles with invalid files: 844
+
+Error types: 
+
+'blank-row': 45748
+'duplicate-row': 9384
+'duplicate-header': 6672
+'blank-header': 2479
+'missing-value': 1032
+'extra-value': 39
+'source-error': 11
+'format-error': 4
