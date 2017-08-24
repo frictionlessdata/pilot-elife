@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 OWNER = 'elifesciences'
 REPO = 'elife-article-xml'
 SHA = '2e032ca678970d84401af9db56f7c346816416d0'
-TOKENS = [CHANGE_ME]
+TOKENS = [os.environ['GITHUB_TOKEN']]
 
 API_BASE = 'https://prod--gateway.elifesciences.org'
 
@@ -75,27 +75,28 @@ def _get_article_ids_from_repo():
     for _file in files:
         # elife-00308-v1.xml
         name = os.path.basename(_file)
-        if name.startswith('elife'):
-            ids.append(name[6:11])
+        id_ = name[6:11]
+        if name.startswith('elife') and id_ not in ids:
+            ids.append(id_)
 
     return ids
 
 
 def get_article_ids():
-    ids = get_article_ids()
-    with open('elife_article_ids.txt', 'w') as f:
+    ids = _get_article_ids_from_repo()
+    with open('article_ids.txt', 'w') as f:
 
         for _id in ids:
             f.write(_id + '\n')
 
-    print('Written {} ids in elife_article_ids.txt'.format(len(ids)))
+    print('Written {} ids in article_ids.txt'.format(len(ids)))
 
 
 def download_articles():
 
     offset = 0
 
-    with open('elife_article_ids.txt', 'r') as f:
+    with open('article_ids.txt', 'r') as f:
         ids = f.readlines()
     for index, _id in enumerate(ids[offset:]):
         _id = _id.strip('\n')
