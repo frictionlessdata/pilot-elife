@@ -4,7 +4,8 @@ import glob
 import sys
 import datetime
 
-from goodtables import Inspector
+
+from goodtables import validate
 
 files = glob.glob('articles/*.json')
 
@@ -92,14 +93,18 @@ def validate_urls():
 
     status_counts = {'valid': 0, 'invalid': 0}
     files_count = 0
-    with open('output/article_reports.json', 'w') as f:
+    with open('output/article_reports_lax.json', 'w') as f:
         f.write('[\n')
         for index, article in enumerate(articles):
 
+            if files_count > 0:
+                f.write(',\n')
+
             sources = [{'source': _file['uri']} for _file in article['files']]
 
-            inspector = Inspector()
-            report = inspector.inspect(sources, preset='nested')
+            report = validate(
+                sources, preset='nested', table_limit=100,
+                skip_checks=['blank-row', 'duplicate-row', 'duplicate-header'])
 
             out = article.copy()
             out['report'] = report
@@ -115,7 +120,7 @@ def validate_urls():
                     return x.isoformat()
 
             f.write(
-                json.dumps(out, indent=2, default=datetime_handler) + ',\n')
+                json.dumps(out, indent=2, default=datetime_handler))
             print('Validated article {} of {}'.format(index, len(articles)))
 
             del out
@@ -137,20 +142,34 @@ Articles with invalid files: {invalid}
 
 def report_stats():
 
-    status_counts = {'valid': 0, 'invalid': 0}
+    status_counts = {
+        'total': 0, 'valid': 0, 'invalid': 0,
+        'total_files': 0, 'tables_valid': 0, 'tables_invalid': 0}
     error_counts = {}
-    with open('output/article_reports.json', 'r') as f:
+    with open('output/article_reports_lax_1.json', 'r') as f:
         articles = json.load(f)
         for article in articles:
+
+            status_counts['total'] += 1
+
+            status_counts['total_files'] += len(
+                article['report']['tables'])
+
             if article['report']['valid']:
                 status_counts['valid'] += 1
+
+                status_counts['tables_valid'] += len(
+                    article['report']['tables'])
                 continue
             else:
                 status_counts['invalid'] += 1
 
             for table in article['report']['tables']:
                 if table['valid']:
+                    status_counts['tables_valid'] += 1
                     continue
+                else:
+                    status_counts['tables_invalid'] += 1
 
                 for error in table['errors']:
                     if error['code'] not in error_counts:
@@ -159,12 +178,21 @@ def report_stats():
                     error_counts[error['code']] += 1
 
     msg = '''
+Total articles: {total}
 Articles with valid files: {valid}
 Articles with invalid files: {invalid}
+Total files: {total_files}
+Total valid files: {tables_valid}
+Total invalid files: {tables_invalid}
+
 Error types: {error_types}
     '''.format(
+            total=status_counts['total'],
             valid=status_counts['valid'],
             invalid=status_counts['invalid'],
+            total_files=status_counts['total_files'],
+            tables_valid=status_counts['tables_valid'],
+            tables_invalid=status_counts['tables_invalid'],
             error_types=error_counts
     )
 
@@ -172,12 +200,13 @@ Error types: {error_types}
 
 
 USAGE = '''
-python articles.py [extract|validate|stats]
+python process.py [extract|validate|stats]
 '''
 
 if __name__ == '__main__':
 
-    if len(sys.argv) != 2 or sys.argv[1] not in ('extract', 'validate', 'stats'):
+    if len(sys.argv) != 2 or sys.argv[1] not in (
+            'extract', 'validate', 'stats'):
         print(USAGE)
         sys.exit(1)
 

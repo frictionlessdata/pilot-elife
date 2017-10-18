@@ -1,4 +1,4 @@
-Done. 3910 articles, 1085 articles with data.
+Done. 1085 articles with data.
 Average data files per article: 3.98
 File type counts: {'xlsx': 3855, 'csv': 123, 'xls': 340}
 
